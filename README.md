@@ -1,7 +1,9 @@
 Base images
 ============
 
-# Naming convension
+# Naming convension 
+
+## TAG_REQUIRED = true
 
 All images should have names start with repository name e.g. `operations/docker-images`
 
@@ -30,3 +32,11 @@ Examples:
 * `percona/5.6/5.6.7.Dockerfile` : `operations/docker-images/percona/5.6:5.6.7-feature`
 * `php/application.Dockerfile` : `operations/docker-images/php:application-feature`
 * `Application.Dockerfile` : `operations/docker-images:application-feature`
+
+## TAG_REQUIRED != true
+
+In case `TAG_REQUIRED != true` tag will not be created and last part of image path and branch name will be spllited by slashes.
+
+Example:
+* percona/5.6/5.6.7.Dockerfile` : `operations/docker-images/percona/5.6/5.6.7/feature
+

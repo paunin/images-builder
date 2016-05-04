@@ -1,4 +1,4 @@
-
+x
 #!/usr/bin/env bash
 
 # ------------------------------------------------------
@@ -9,9 +9,10 @@ BASE_NAME="operations/some-thing"
 BRANCH="feature"
 DEFAULT_BRANCH="master"
 REGISTRY='master-dr.co'
+TAG_REQUIRED=true
 # ------------------------------------------------------
 
-
+BRANCH=`echo $BRANCH | tr '[:upper:]' '[:lower:]'`
 PATH_TO_SEARCH=`pwd`"/$PATH_TO_SEARCH"
 set -e
 
@@ -29,26 +30,30 @@ for DOCKER_FILE in `find * -regex '.*Dockerfile$'`; do
     echo "##teamcity[blockOpened name='$MESSAGE']"
 
 
-    # in case we work in feature branch
-    if [ "$BRANCH" = "$DEFAULT_BRANCH" ]; then
-        TAG_SUFFIX=""
-    else
-        TAG_SUFFIX="$BRANCH"
-    fi
-
-
-    # getting parts of image name
+        # getting parts of image name
     NAME_PARTS=`echo $DOCKER_FILE | sed -e 's/\/*\.*Dockerfile$//g' -e 's/ /_/g' -e 's/\//,/g' | tr '[:upper:]' '[:lower:]'`
 
     IFS=',' read -r -a NAME_PARTS_ARRAY <<< "$NAME_PARTS"
 
-    # getting tag
+    # getting tag if required
     PARTS_LEN=${#NAME_PARTS_ARRAY[@]}
-    if (( "$PARTS_LEN" > 0 )); then
+    if $TAG_REQUIRED && (( "$PARTS_LEN" > 0 )); then
         TAG=${NAME_PARTS_ARRAY[${#NAME_PARTS_ARRAY[@]} - 1]}
         unset NAME_PARTS_ARRAY[$PARTS_LEN-1]
     else
         TAG=""
+    fi
+
+
+    # in case we work in feature branch
+    if $TAG_REQUIRED && [ "$BRANCH" != "$DEFAULT_BRANCH" ]; then
+        TAG_SUFFIX=`echo $BRANCH | tr '[:upper:]' '[:lower:]'`
+    else
+        if [ "$BRANCH" != "$DEFAULT_BRANCH" ]; then
+            NAME_PARTS_ARRAY+=("$BRANCH")
+        else
+            TAG_SUFFIX=""
+        fi
     fi
 
     if [ "$TAG" = "" ]; then
@@ -73,6 +78,7 @@ for DOCKER_FILE in `find * -regex '.*Dockerfile$'`; do
 
     #getting full image name
     IMAGE_NAME="$REGISTRY/$NAME"
+    
     if [ "$TAG" != "" ]; then
         IMAGE_NAME="$IMAGE_NAME:$TAG"
     fi
@@ -84,6 +90,7 @@ for DOCKER_FILE in `find * -regex '.*Dockerfile$'`; do
     CONTEXT=$(dirname "${DOCKER_FILE}")
     DOCKER_FILE_ABS=`pwd`"/$DOCKER_FILE"
     cd $CONTEXT 
+    #echo "---------------Build from context "`pwd`
     docker build --rm=true -t "$IMAGE_NAME" -f "$DOCKER_FILE_ABS" .
     echo "Add image '$IMAGE_NAME' to array for push"
 
