@@ -1,15 +1,27 @@
-x
 #!/usr/bin/env bash
 
 # ------------------------------------------------------
-# HELLO! change these configurations to adapt the script
-# Also you can change it for TC or Jenkins Job
+# Usage:
+function print_help(){
+   echo "Usage: build.sh PATH_TO_SEARCH REGISTRY BASE_NAME BRANCH [DEFAULT_BRANCH=master [TAG_REQUIRED=false]]"
+}
+
+# ------------------------------------------------------
+# Defaults:
 PATH_TO_SEARCH="../docker-images/"
+REGISTRY='master-dr.co'
 BASE_NAME="operations/some-thing"
 BRANCH="feature"
 DEFAULT_BRANCH="master"
-REGISTRY='master-dr.co'
-TAG_REQUIRED=true
+TAG_REQUIRED=false
+# ------------------------------------------------------
+if [ -n "$1" ]; then PATH_TO_SEARCH="$1"; else print_help; exit 1; fi
+if [ -n "$2" ]; then REGISTRY="$2"; else print_help; exit 1; fi
+if [ -n "$3" ]; then BASE_NAME="$3"; else print_help; exit 1; fi
+if [ -n "$4" ]; then BRANCH="$4"; else print_help; exit 1; fi
+if [ -n "$5" ]; then DEFAULT_BRANCH="$5"; fi
+if [ -n "$6" ]; then TAG_REQUIRED="$6"; fi
+
 # ------------------------------------------------------
 
 BRANCH=`echo $BRANCH | tr '[:upper:]' '[:lower:]'`
