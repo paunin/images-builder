@@ -3,7 +3,7 @@
 # ------------------------------------------------------
 # Usage:
 function print_help(){
-   echo "Usage: build.sh PATH_TO_SEARCH REGISTRY BASE_NAME BRANCH [DEFAULT_BRANCH=master [TAG_REQUIRED=false]]"
+   echo "Usage: build.sh PATH_TO_SEARCH REGISTRY BASE_NAME BRANCH [DEFAULT_BRANCH=master [TAG_REQUIRED_FOR_BRANCH=false]]"
 }
 
 # ------------------------------------------------------
@@ -14,6 +14,7 @@ BASE_NAME="operations/some-thing"
 BRANCH="feature"
 DEFAULT_BRANCH="master"
 TAG_REQUIRED=false
+TAG=""
 # ------------------------------------------------------
 if [ -n "$1" ]; then PATH_TO_SEARCH="$1"; else print_help; exit 1; fi
 if [ -n "$2" ]; then REGISTRY="$2"; else print_help; exit 1; fi
@@ -47,34 +48,28 @@ for DOCKER_FILE in `find * -regex '.*Dockerfile$'`; do
 
     IFS=',' read -r -a NAME_PARTS_ARRAY <<< "$NAME_PARTS"
 
+
+
     # getting tag if required
-    PARTS_LEN=${#NAME_PARTS_ARRAY[@]}
-    if $TAG_REQUIRED && (( "$PARTS_LEN" > 0 )); then
-        TAG=${NAME_PARTS_ARRAY[${#NAME_PARTS_ARRAY[@]} - 1]}
-        unset NAME_PARTS_ARRAY[$PARTS_LEN-1]
-    else
-        TAG=""
-    fi
-
-
     # in case we work in feature branch
-    if $TAG_REQUIRED && [ "$BRANCH" != "$DEFAULT_BRANCH" ]; then
-        TAG_SUFFIX=`echo $BRANCH | tr '[:upper:]' '[:lower:]'`
+    if $TAG_REQUIRED; then
+
+        if  [ "$BRANCH" != "$DEFAULT_BRANCH" ]; then
+            TAG=`echo $BRANCH | tr '[:upper:]' '[:lower:]'`
+        else
+            # PARTS_LEN=${#NAME_PARTS_ARRAY[@]}
+            # if (( "$PARTS_LEN" > 0 )); then
+            #     TAG=${NAME_PARTS_ARRAY[${#NAME_PARTS_ARRAY[@]} - 1]}
+            #     unset NAME_PARTS_ARRAY[$PARTS_LEN-1]
+            # fi
+            TAG="latest"
+        fi       
     else
         if [ "$BRANCH" != "$DEFAULT_BRANCH" ]; then
             NAME_PARTS_ARRAY+=("$BRANCH")
-        else
-            TAG_SUFFIX=""
         fi
     fi
 
-    if [ "$TAG" = "" ]; then
-        TAG="$TAG_SUFFIX"
-    else
-        if [ "$TAG_SUFFIX" != "" ]; then
-            TAG="$TAG-$TAG_SUFFIX"
-        fi
-    fi
     echo "TAG: '$TAG'"
 
     # getting name
@@ -128,5 +123,5 @@ for IMAGE_NAME in ${BUILT_IMAGES[@]}; do
     docker rmi -f "$IMAGE_NAME"
     echo "##teamcity[blockClosed name='Remove image $IMAGE_NAME']"
 done
-
+TAG_SUFFIX
 cd $BACKUP_PATH
