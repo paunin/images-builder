@@ -123,5 +123,5 @@ for IMAGE_NAME in ${BUILT_IMAGES[@]}; do
     docker rmi -f "$IMAGE_NAME"
     echo "##teamcity[blockClosed name='Remove image $IMAGE_NAME']"
 done
-TAG_SUFFIX
+
 cd $BACKUP_PATH
