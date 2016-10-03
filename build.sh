@@ -15,6 +15,7 @@ BRANCH="feature"
 DEFAULT_BRANCH="master"
 TAG_REQUIRED=false
 TAG=""
+BUILD_OPTIONS=" --rm=true"
 # ------------------------------------------------------
 if [ -n "$1" ]; then PATH_TO_SEARCH="$1"; else print_help; exit 1; fi
 if [ -n "$2" ]; then REGISTRY="$2"; else print_help; exit 1; fi
@@ -22,6 +23,18 @@ if [ -n "$3" ]; then BASE_NAME="$3"; else print_help; exit 1; fi
 if [ -n "$4" ]; then BRANCH="$4"; else print_help; exit 1; fi
 if [ -n "$5" ]; then DEFAULT_BRANCH="$5"; fi
 if [ -n "$6" ]; then TAG_REQUIRED="$6"; fi
+
+if [[ -v NO_CACHE ]] && [ "$NO_CACHE" == 1 ]; then BUILD_OPTIONS="$BUILD_OPTIONS --no-cache"; fi
+
+# ------------------------------------------------------
+
+echo "PATH_TO_SEARCH: $PATH_TO_SEARCH"
+echo "REGISTRY: $REGISTRY"
+echo "BASE_NAME: $BASE_NAME"
+echo "BRANCH: $BRANCH"
+echo "DEFAULT_BRANCH: $DEFAULT_BRANCH"
+echo "TAG_REQUIRED: $TAG_REQUIRED"
+echo "BUILD_OPTIONS: $BUILD_OPTIONS"
 
 # ------------------------------------------------------
 
@@ -98,7 +111,9 @@ for DOCKER_FILE in `find * -regex '.*Dockerfile$'`; do
     DOCKER_FILE_ABS=`pwd`"/$DOCKER_FILE"
     cd $CONTEXT 
     #echo "---------------Build from context "`pwd`
-    docker build --rm=true -t "$IMAGE_NAME" -f "$DOCKER_FILE_ABS" .
+    BUILD_CMD="docker build $BUILD_OPTIONS -t $IMAGE_NAME -f $DOCKER_FILE_ABS ."
+    echo "Will run command: $BUILD_CMD"
+    eval $BUILD_CMD
     echo "Add image '$IMAGE_NAME' to array for push"
 
     BUILT_IMAGES+=("$IMAGE_NAME")
