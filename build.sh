@@ -24,7 +24,7 @@ if [ -n "$3" ]; then BASE_NAME="$3"; else print_help; exit 1; fi
 if [ -n "$4" ]; then BRANCH="$4"; else print_help; exit 1; fi
 if [ -n "$5" ]; then DEFAULT_BRANCH="$5"; fi
 if [ -n "$6" ]; then TAG_REQUIRED="$6"; fi
-if [ -n "$7" ]; then REMOVE_CACHE=false; fi
+if [ -n "$7" ]; then REMOVE_CACHE="$7"; fi
 # ------------------------------------------------------
 
 echo "PATH_TO_SEARCH: $PATH_TO_SEARCH"
