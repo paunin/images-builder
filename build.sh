@@ -16,6 +16,7 @@ DEFAULT_BRANCH="master"
 TAG_REQUIRED=false
 TAG=""
 BUILD_OPTIONS=" --rm=true"
+REMOVE_CACHE=true
 # ------------------------------------------------------
 if [ -n "$1" ]; then PATH_TO_SEARCH="$1"; else print_help; exit 1; fi
 if [ -n "$2" ]; then REGISTRY="$2"; else print_help; exit 1; fi
@@ -23,9 +24,7 @@ if [ -n "$3" ]; then BASE_NAME="$3"; else print_help; exit 1; fi
 if [ -n "$4" ]; then BRANCH="$4"; else print_help; exit 1; fi
 if [ -n "$5" ]; then DEFAULT_BRANCH="$5"; fi
 if [ -n "$6" ]; then TAG_REQUIRED="$6"; fi
-
-if [[ -v NO_CACHE ]] && [ "$NO_CACHE" == 1 ]; then BUILD_OPTIONS="$BUILD_OPTIONS --no-cache"; fi
-
+if [ -n "$7" ]; then REMOVE_CACHE="$7"; fi
 # ------------------------------------------------------
 
 echo "PATH_TO_SEARCH: $PATH_TO_SEARCH"
@@ -35,6 +34,7 @@ echo "BRANCH: $BRANCH"
 echo "DEFAULT_BRANCH: $DEFAULT_BRANCH"
 echo "TAG_REQUIRED: $TAG_REQUIRED"
 echo "BUILD_OPTIONS: $BUILD_OPTIONS"
+echo "REMOVE_CACHE: $REMOVE_CACHE"
 
 # ------------------------------------------------------
 
@@ -133,10 +133,11 @@ for IMAGE_NAME in ${BUILT_IMAGES[@]}; do
 done
 
 # Remove local images
-for IMAGE_NAME in ${BUILT_IMAGES[@]}; do
-    echo "##teamcity[blockOpened name='Remove image $IMAGE_NAME']"
-    docker rmi -f "$IMAGE_NAME"
-    echo "##teamcity[blockClosed name='Remove image $IMAGE_NAME']"
-done
-
+if [ "$REMOVE_CACHE" = true ]; then
+   for IMAGE_NAME in ${BUILT_IMAGES[@]}; do
+       echo "##teamcity[blockOpened name='Remove image $IMAGE_NAME']"
+       docker rmi -f "$IMAGE_NAME"
+       echo "##teamcity[blockClosed name='Remove image $IMAGE_NAME']"
+   done
+fi
 cd $BACKUP_PATH
