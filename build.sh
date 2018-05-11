@@ -46,17 +46,13 @@ set -e
 BACKUP_PATH=`pwd`
 cd $PATH_TO_SEARCH
 
-# Build images
-BUILT_IMAGES=()
-
 
 IFS=$'\n'
 for DOCKER_FILE in `find * -regex '.*Dockerfile$'`; do
     MESSAGE="Building container for file $DOCKER_FILE"
     echo "##teamcity[blockOpened name='$MESSAGE']"
 
-
-        # getting parts of image name
+    # getting parts of image name
     NAME_PARTS=`echo $DOCKER_FILE | sed -e 's/\/*\.*Dockerfile$//g' -e 's/ /_/g' -e 's/\//,/g' | tr '[:upper:]' '[:lower:]'`
 
     IFS=',' read -r -a NAME_PARTS_ARRAY <<< "$NAME_PARTS"
@@ -105,7 +101,6 @@ for DOCKER_FILE in `find * -regex '.*Dockerfile$'`; do
 
     echo "IMAGE_NAME: '$IMAGE_NAME'"
 
-
     #Building
     CONTEXT=$(dirname "${DOCKER_FILE}")
     DOCKER_FILE_ABS=`pwd`"/$DOCKER_FILE"
@@ -116,28 +111,19 @@ for DOCKER_FILE in `find * -regex '.*Dockerfile$'`; do
     eval $BUILD_CMD
     echo "Add image '$IMAGE_NAME' to array for push"
 
-    BUILT_IMAGES+=("$IMAGE_NAME")
-    cd $PATH_TO_SEARCH
-
     echo "##teamcity[blockClosed name='$MESSAGE']"
-done
 
-# Unique names for images
-eval BUILT_IMAGES=($(printf "%q\n" "${BUILT_IMAGES[@]}" | sort -u))
-
-# Push images
-for IMAGE_NAME in ${BUILT_IMAGES[@]}; do
     echo "##teamcity[blockOpened name='Push image $IMAGE_NAME']"
     docker push "$IMAGE_NAME"
     echo "##teamcity[blockClosed name='Push image $IMAGE_NAME']"
+
+    if [ "$REMOVE_CACHE" = true ]; then
+        echo "##teamcity[blockOpened name='Remove image $IMAGE_NAME']"
+        docker rmi -f "$IMAGE_NAME"
+        echo "##teamcity[blockClosed name='Remove image $IMAGE_NAME']"
+    fi
+
+    cd $PATH_TO_SEARCH
 done
 
-# Remove local images
-if [ "$REMOVE_CACHE" = true ]; then
-   for IMAGE_NAME in ${BUILT_IMAGES[@]}; do
-       echo "##teamcity[blockOpened name='Remove image $IMAGE_NAME']"
-       docker rmi -f "$IMAGE_NAME"
-       echo "##teamcity[blockClosed name='Remove image $IMAGE_NAME']"
-   done
-fi
 cd $BACKUP_PATH
